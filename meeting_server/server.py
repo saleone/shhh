@@ -1,24 +1,48 @@
+import os
 import asyncio
 import websockets
 
 
-locked = False
+locked = None
 subs = set()
 
+async def notify_subs():
+    global locked
+    await asyncio.wait([
+        sub.send('UNLOCKED' if locked is None else 'LOCKED')
+        for sub in subs
+    ])
+
 async def lock(websocket, path):
-    while True:
-        if not websocket in subs:
-            subs.add(websocket)
-        await websocket.recv()
-        print('Message')
-        global locked
-        locked = not locked
-        state = 'LOCKED' if locked else 'UNLOCKED'
+    global locked
+    if not websocket in subs:
+        print(f'Subscribed: {websocket}')
+        subs.add(websocket)
+    try:
+        while True:
+            await websocket.recv()
+            print(f'Received request from {websocket}')
 
-        try:
-            await asyncio.wait([sub.send(state) for sub in subs])
+            if locked is None:
+                print('  Locked')
+                locked = websocket
+            elif locked is websocket or locked not in subs:
+                # Only the person that locked can unlock
+                print(' Unlocked')
+                locked = None
+
+            await notify_subs()
             await asyncio.sleep(1)
-        finally:
-            subs.remove(websocket)
+    finally:
+        print(f'Unsubscribed: {websocket}')
+        # Make sure to release the lock when owner disconnects
+        if websocket is locked:
+            locked = None
+            await notify_subs()
+        subs.remove(websocket)
 
-server_runner = websockets.serve(lock, 'localhost', 8765)
+server_runner = websockets.serve(
+    lock,
+    os.environ.get('OM_HOST', 'localhost'),
+    int(os.environ.get('OM_PORT', 8765)), # TODO: This may break on conversion
+)
