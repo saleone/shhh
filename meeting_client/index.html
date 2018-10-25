@@ -1,0 +1,28 @@
+<!doctyle html>
+<html>
+    <head>
+    </head>
+    <body style='background: green'>
+        <button id='send'>CLICK HERE</button>
+
+        <script type='text/javascript'>
+            let sendSocketMessage = con => con.send('');
+
+            (function() {
+                connection.onopen = e => console.debug('Connected to server.', e);
+                connection.onclose = e => console.debug('Connection to server lost.', e);
+
+                connection.onmessage = e => {
+                    console.debug('Message received from server:', e);
+                    document.querySelector('body')
+                        .style.background = e.data == 'LOCKED' ? 'red' : 'green';
+                };
+
+                let button = document.querySelector('#send');
+                button.addEventListener('click', () => {
+                    connection.send('');
+                })
+            })()
+        </script>
+    </body>
+</html>
