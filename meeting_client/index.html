@@ -99,19 +99,29 @@
 
         <script type='text/javascript'>
             let sendSocketMessage = con => con.send('');
-            let checkbox = document.querySelector('#cb');
 
             (function() {
                 let connection = new WebSocket('ws://localhost:8765');
+                let checkbox = document.querySelector('#cb');
+                Notification.requestPermission().then(console.log).catch(console.debug);
                 connection.onopen = e => console.debug('Connected to server.', e);
                 connection.onclose = e => console.debug('Connection to server lost.', e);
 
                 connection.onmessage = e => {
                     console.debug('Message received from server:', e);
                     document.querySelector('body')
-                        .style.background = e.data == 'LOCKED' ? 'red' : 'green';
+                        .style.background = e.data === 'LOCKED' ? 'red' : 'green';
 
-                    checkbox.checked = e.data == 'LOCKED';
+                    checkbox.checked = e.data === 'LOCKED';
+
+                    if (!("Notification" in window)) return;
+
+                    if (Notification.permission === 'granted')
+                        new Notification(e.data === 'LOCKED'
+                            ? "Somebody is having a meeting. Probably Koprena"
+                            : "Somebody is not on a meeting anymore."
+                        );
+
                 };
 
                 document.querySelector('#switch').addEventListener('click', () => {
