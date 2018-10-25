@@ -2,13 +2,107 @@
 <html>
     <head>
     </head>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            flex-direction: column;
+        }
+
+
+
+        .switch {
+            width: 50px;
+            height: 100px;
+            position: relative;
+        }
+
+        .switch label {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #cbc7bc;
+            border-radius: 5px;
+            box-shadow:
+                inset 0 1px 0 white,
+                0 0 0 1px #999,
+                0 0 5px 1px rgba(0,0,0,0.2),
+                0 2px 0 rgba(255,255,255,0.6),
+                inset 0 10px 1px #e5e5e5,
+                inset 0 11px 0 rgba(255,255,255,0.5),
+                inset 0 -45px 3px #ddd;
+        }
+
+        .switch input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .switch label:after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            top: -20px;
+            left: -25px;
+            bottom: -20px;
+            right: -25px;
+            background: #ccc;
+            background: linear-gradient(#ddd, #bbb);
+            border-radius: inherit;
+            border: 1px solid #bbb;
+            box-shadow:
+                0 0 5px 1px rgba(0,0,0,0.15),
+                0 3px 3px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        .switch label:before {
+            content: "";
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            top: -13px;
+            left: 20px;
+            background: #666;
+            border-radius: 50%;
+            box-shadow:
+                0 1px 0 white,
+                0 120px 0 #666,
+                0 121px 0 white;
+        }
+
+        .switch input:checked ~ label {
+            background: #d2cbc3;
+            box-shadow:
+                inset 0 1px 0 white,
+                0 0 0 1px #999,
+                0 0 5px 1px rgba(0,0,0,0.2),
+                inset 0 -10px 0 #aaa,
+                0 2px 0 rgba(255,255,255,0.1),
+                inset 0 45px 3px #e0e0E0,
+                0 8px 6px rgba(0,0,0,0.18);
+        }
+
+    </style>
     <body style='background: green'>
-        <button id='send'>CLICK HERE</button>
+        <div class="switch" id="switch">
+            <input type="checkbox" id="cb">
+            <label></label>
+        </div>
 
         <script type='text/javascript'>
             let sendSocketMessage = con => con.send('');
+            let checkbox = document.querySelector('#cb');
 
             (function() {
+                let connection = new WebSocket('ws://localhost:8765');
                 connection.onopen = e => console.debug('Connected to server.', e);
                 connection.onclose = e => console.debug('Connection to server lost.', e);
 
@@ -16,10 +110,11 @@
                     console.debug('Message received from server:', e);
                     document.querySelector('body')
                         .style.background = e.data == 'LOCKED' ? 'red' : 'green';
+
+                    checkbox.checked = e.data == 'LOCKED';
                 };
 
-                let button = document.querySelector('#send');
-                button.addEventListener('click', () => {
+                document.querySelector('#switch').addEventListener('click', () => {
                     connection.send('');
                 })
             })()
